@@ -10,7 +10,7 @@ export default function NewConnectorPage() {
       <div>
         <h1 className="text-2xl font-semibold">New Connector</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Paste the system&apos;s docs and what the client&apos;s engineers told you. ACE extracts the endpoints, auth and tribal rules,
+          Paste the system&apos;s docs and what the client&apos;s engineers told you. AI Connector extracts the endpoints, auth and tribal rules,
           then generates an MCP server.{" "}
           <span className="text-slate-500">
             Pattern Library: {patterns.length} learned pattern{patterns.length === 1 ? "" : "s"} ready to apply.

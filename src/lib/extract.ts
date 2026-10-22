@@ -8,7 +8,7 @@ import type { Pattern } from "./db";
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 
-const SYSTEM = `You are ACE, a senior integration engineer who builds MCP connectors for legacy enterprise systems.
+const SYSTEM = `You are AI Connector, a senior integration engineer who builds MCP connectors for legacy enterprise systems.
 
 You receive (1) official docs / API spec / sample code and (2) free-text notes from the client's engineers.
 The notes are tribal knowledge: when they contradict the docs, the notes win.

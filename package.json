@@ -1,7 +1,7 @@
 {
-  "name": "ace-agentic-connector",
+  "name": "ai-connector",
   "version": "0.1.0",
-  "description": "ACE - Agentic Connector: build MCP connectors for custom enterprise software from docs + tribal knowledge",
+  "description": "AI Connector: build MCP connectors for custom enterprise software from docs + tribal knowledge",
   "scripts": {
     "dev": "concurrently -k -n app,mocks -c blue,magenta \"next dev\" \"node mock-servers/index.mjs\"",
     "build": "next build",

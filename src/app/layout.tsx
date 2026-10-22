@@ -3,7 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ACE · Agentic Connector",
+  title: "AI Connector",
   description: "Build MCP connectors for custom enterprise software from docs and tribal knowledge.",
 };
 
@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mx-auto flex max-w-6xl items-center gap-8 px-4 py-3">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <span className="grid h-7 w-7 place-items-center rounded-md bg-slate-900 text-xs text-white">AC</span>
-              ACE <span className="hidden text-sm font-normal text-slate-500 sm:inline">Agentic Connector</span>
+              AI Connector
             </Link>
             <nav className="flex gap-1 text-sm">
               {NAV.map((n) => (

@@ -11,7 +11,7 @@ export default function PatternsPage() {
         <div>
           <h1 className="text-2xl font-semibold">Pattern Library</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Every quirk ACE extracts lands here. New connectors retrieve matching patterns and apply their fixes automatically.
+            Every quirk AI Connector extracts lands here. New connectors retrieve matching patterns and apply their fixes automatically.
           </p>
         </div>
         {patterns.length > 0 && <ResetPatternsButton />}

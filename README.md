@@ -1,6 +1,6 @@
-# ACE — Agentic Connector
+# AI Connector
 
-ACE helps engineers build **agent connectors (MCP servers) for custom enterprise software**. You give it the system's docs plus the
+AI Connector helps engineers build **agent connectors (MCP servers) for custom enterprise software**. You give it the system's docs plus the
 tribal knowledge you got from the client's engineers; it extracts endpoints, auth, entities and rules, generates a working TypeScript
 MCP server, tests every tool against the system, and **learns** each quirk into a Pattern Library that it applies to the next connector.
 
@@ -37,7 +37,7 @@ The SQLite database lives in `data/ace.db`. Delete it (or use **Reset library** 
 
 ## 2-minute demo script
 
-1. **(0:00) Frame it.** "Every enterprise has a legacy system with quirks nobody wrote down. ACE turns docs + hallway knowledge into an agent connector — and gets smarter with each one." Show the empty **Pattern Library**.
+1. **(0:00) Frame it.** "Every enterprise has a legacy system with quirks nobody wrote down. AI Connector turns docs + hallway knowledge into an agent connector — and gets smarter with each one." Show the empty **Pattern Library**.
 2. **(0:15) First connector.** On **New Connector**, click **1 · AcmeERP**. Point at the left box (official docs, which claim "standard HTTP errors") and the right box (Dana's notes: "everything returns 200", "never call /sync during business hours"). Click **Build connector**.
 3. **(0:40) What it extracted.** On the connector page show auth, endpoints, entities and the four **tribal rules**, each tagged *new*. Scroll to a tool: its description embeds the rules an agent must know.
 4. **(0:55) Try it.** Click **Run all**. Point at the purple log lines: `Token expired (401) -> re-authenticating and retrying`, `Pagination: collected 5 items across all pages`. If it's business hours, `run_sync` shows **BLOCKED** — the tribal rule is enforced, not just documented. Optional: change `get_order` args to `{"id":"9999"}` and Run → **FAIL ORDER_NOT_FOUND** even though the server said HTTP 200.

@@ -148,7 +148,7 @@ vite.config.ts.timestamp-*
 # Turbo Repo
 .turbo
 
-# ACE
+# AI Connector
 !.env.example
 data/
 next-env.d.ts
