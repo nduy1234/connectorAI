@@ -1,0 +1,123 @@
+{
+  "systemName": "ShipTrack",
+  "summary": "In-house logistics tracker for shipments, carriers and shipping labels.",
+  "baseUrl": "http://localhost:4002",
+  "auth": {
+    "type": "session_token",
+    "tokenEndpoint": "/api/login",
+    "credentials": "{\"username\":\"ops\",\"password\":\"tracker\"}",
+    "tokenField": "session_token",
+    "headerName": "X-Session-Token",
+    "headerPrefix": "",
+    "refreshOn401": true,
+    "notes": "Username/password login returns a session token that expires after a few requests (401 SESSION_EXPIRED)."
+  },
+  "entities": [
+    { "name": "Shipment", "fields": ["tracking_id", "carrier", "status", "destination"] },
+    { "name": "Carrier", "fields": ["name"] }
+  ],
+  "endpoints": [
+    { "method": "POST", "path": "/api/login", "description": "Log in and get a session token" },
+    { "method": "GET", "path": "/api/carriers", "description": "List supported carriers" },
+    { "method": "GET", "path": "/api/shipments", "description": "List shipments (paged with ?page=)" },
+    { "method": "GET", "path": "/api/shipments/:tracking_id", "description": "Get one shipment" },
+    { "method": "POST", "path": "/api/shipments/:tracking_id/label", "description": "Create a shipping label" }
+  ],
+  "rules": [
+    {
+      "id": "r1",
+      "text": "Failed calls still return HTTP 200: check `ok`; if it is false the reason is in `error`.",
+      "patternSlug": "silent-200-errors",
+      "patternName": "Silent 200 errors",
+      "patternDescription": "The API answers HTTP 200 for failed calls and reports the error in a body field.",
+      "fix": "Check the status/ok field on every response and raise its error message."
+    },
+    {
+      "id": "r2",
+      "text": "Shipments are paged with `?page=` (1-based, 3 per page, fixed). Loop until `has_next` is false.",
+      "patternSlug": "legacy-pagination",
+      "patternName": "Legacy pagination",
+      "patternDescription": "Fixed-size, 1-based page-number paging with a has-more flag instead of cursors or links.",
+      "fix": "Loop page numbers from 1 until the more/has_next flag is false and merge the results."
+    },
+    {
+      "id": "r3",
+      "text": "Session tokens expire after a few requests (401 SESSION_EXPIRED): log in again and retry the call.",
+      "patternSlug": "token-refresh",
+      "patternName": "Token refresh",
+      "patternDescription": "Auth tokens expire early or unpredictably and the API responds 401.",
+      "fix": "On 401, re-authenticate once and transparently retry the original call."
+    },
+    {
+      "id": "r4",
+      "text": "Tracking IDs are case-sensitive and must be UPPERCASE (\"ST-9001\"); lowercase IDs come back as NOT_FOUND.",
+      "patternSlug": "case-sensitive-ids",
+      "patternName": "Case-sensitive IDs",
+      "patternDescription": "Identifiers are case-sensitive and the wrong case looks like 'not found' instead of a validation error.",
+      "fix": "Normalize identifier inputs to the required case before calling."
+    },
+    {
+      "id": "r5",
+      "text": "Label creation requires `weight_kg`; without it the call fails silently with WEIGHT_REQUIRED.",
+      "patternSlug": "undocumented-required-fields",
+      "patternName": "Undocumented required fields",
+      "patternDescription": "A field the docs treat as optional is actually required, and omitting it fails quietly.",
+      "fix": "Mark the field as required in the tool schema."
+    }
+  ],
+  "tools": [
+    {
+      "name": "list_carriers",
+      "description": "List the carriers ShipTrack supports.",
+      "method": "GET",
+      "path": "/api/carriers",
+      "params": [],
+      "silentError": { "field": "ok", "okValues": ["true"], "messageField": "error" },
+      "pagination": null,
+      "blockedHours": null,
+      "ruleIds": ["r1", "r3"],
+      "sampleArgs": "{}"
+    },
+    {
+      "name": "list_shipments",
+      "description": "List every shipment with carrier, status and destination (all pages).",
+      "method": "GET",
+      "path": "/api/shipments",
+      "params": [],
+      "silentError": { "field": "ok", "okValues": ["true"], "messageField": "error" },
+      "pagination": { "style": "page", "param": "page", "itemsField": "results", "nextField": "has_next" },
+      "blockedHours": null,
+      "ruleIds": ["r1", "r2", "r3"],
+      "sampleArgs": "{}"
+    },
+    {
+      "name": "get_shipment",
+      "description": "Look up one shipment by tracking ID.",
+      "method": "GET",
+      "path": "/api/shipments/:tracking_id",
+      "params": [
+        { "name": "tracking_id", "in": "path", "type": "string", "required": true, "description": "Tracking ID like ST-9001", "normalize": "uppercase" }
+      ],
+      "silentError": { "field": "ok", "okValues": ["true"], "messageField": "error" },
+      "pagination": null,
+      "blockedHours": null,
+      "ruleIds": ["r1", "r3", "r4"],
+      "sampleArgs": "{\"tracking_id\":\"st-9001\"}"
+    },
+    {
+      "name": "create_label",
+      "description": "Create a shipping label for a shipment and return its URL.",
+      "method": "POST",
+      "path": "/api/shipments/:tracking_id/label",
+      "params": [
+        { "name": "tracking_id", "in": "path", "type": "string", "required": true, "description": "Tracking ID like ST-9003", "normalize": "uppercase" },
+        { "name": "weight_kg", "in": "body", "type": "number", "required": true, "description": "Package weight in kilograms", "normalize": null }
+      ],
+      "silentError": { "field": "ok", "okValues": ["true"], "messageField": "error" },
+      "pagination": null,
+      "blockedHours": null,
+      "ruleIds": ["r1", "r3", "r4", "r5"],
+      "sampleArgs": "{\"tracking_id\":\"ST-9003\",\"weight_kg\":2.5}"
+    }
+  ]
+}

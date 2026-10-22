@@ -1,0 +1,36 @@
+{
+  "name": "ace-agentic-connector",
+  "version": "0.1.0",
+  "description": "ACE - Agentic Connector: build MCP connectors for custom enterprise software from docs + tribal knowledge",
+  "scripts": {
+    "dev": "concurrently -k -n app,mocks -c blue,magenta \"next dev\" \"node mock-servers/index.mjs\"",
+    "build": "next build",
+    "start": "next start",
+    "mocks": "node mock-servers/index.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.1.0",
+    "express": "^5.3.0",
+    "next": "^14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "autoprefixer": "^10.6.1",
+    "concurrently": "^10.0.6",
+    "postcss": "^8.5.31",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22.13"
+  }
+}

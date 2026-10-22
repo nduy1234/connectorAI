@@ -1,0 +1,129 @@
+{
+  "systemName": "AcmeERP",
+  "summary": "Legacy 2009-era ERP exposing customers, orders and a warehouse batch sync over a quirky REST API.",
+  "baseUrl": "http://localhost:4001",
+  "auth": {
+    "type": "bearer_token",
+    "tokenEndpoint": "/auth/token",
+    "credentials": "{\"client_id\":\"acme-demo\",\"client_secret\":\"s3cret\"}",
+    "tokenField": "access_token",
+    "headerName": "Authorization",
+    "headerPrefix": "Bearer ",
+    "refreshOn401": true,
+    "notes": "Client-credentials token. Docs claim expires_in 30 but tokens die after a few calls; re-authenticate on 401."
+  },
+  "entities": [
+    { "name": "Customer", "fields": ["id", "name", "tier"] },
+    { "name": "Order", "fields": ["id", "customer_id", "sku", "qty", "state"] }
+  ],
+  "endpoints": [
+    { "method": "POST", "path": "/auth/token", "description": "Exchange client credentials for an access token" },
+    { "method": "GET", "path": "/customers", "description": "List customers (paged with ?pg=)" },
+    { "method": "GET", "path": "/orders", "description": "List orders (paged with ?pg=)" },
+    { "method": "GET", "path": "/orders/:id", "description": "Get one order" },
+    { "method": "POST", "path": "/orders", "description": "Create an order" },
+    { "method": "POST", "path": "/sync", "description": "Run ERP-to-warehouse batch reconciliation" }
+  ],
+  "rules": [
+    {
+      "id": "r1",
+      "text": "Every endpoint returns HTTP 200 even on failure: check the `status` field; anything other than \"OK\" is a failure and the reason is in `message`.",
+      "patternSlug": "silent-200-errors",
+      "patternName": "Silent 200 errors",
+      "patternDescription": "The API answers HTTP 200 for failed calls and reports the error in a body field.",
+      "fix": "Check the status/ok field on every response and raise its error message."
+    },
+    {
+      "id": "r2",
+      "text": "Lists use `?pg=` (1-based, fixed page size 2). Keep fetching while `more` is true or you only get the first page.",
+      "patternSlug": "legacy-pagination",
+      "patternName": "Legacy pagination",
+      "patternDescription": "Fixed-size, 1-based page-number paging with a has-more flag instead of cursors or links.",
+      "fix": "Loop page numbers from 1 until the more/has_next flag is false and merge the results."
+    },
+    {
+      "id": "r3",
+      "text": "Access tokens expire after a handful of calls regardless of expires_in. On 401, call /auth/token again and retry without surfacing the error.",
+      "patternSlug": "token-refresh",
+      "patternName": "Token refresh",
+      "patternDescription": "Auth tokens expire early or unpredictably and the API responds 401.",
+      "fix": "On 401, re-authenticate once and transparently retry the original call."
+    },
+    {
+      "id": "r4",
+      "text": "Never call /sync during business hours (09:00-17:00 local): it locks the order tables and stops the warehouse floor.",
+      "patternSlug": "business-hours-restriction",
+      "patternName": "Business-hours restriction",
+      "patternDescription": "A heavy batch operation that must not run during business hours.",
+      "fix": "Refuse the call inside the blocked time window."
+    }
+  ],
+  "tools": [
+    {
+      "name": "list_customers",
+      "description": "List all AcmeERP customers with their tier.",
+      "method": "GET",
+      "path": "/customers",
+      "params": [],
+      "silentError": { "field": "status", "okValues": ["OK"], "messageField": "message" },
+      "pagination": { "style": "page", "param": "pg", "itemsField": "data", "nextField": "more" },
+      "blockedHours": null,
+      "ruleIds": ["r1", "r2", "r3"],
+      "sampleArgs": "{}"
+    },
+    {
+      "name": "list_orders",
+      "description": "List every order in AcmeERP (all pages).",
+      "method": "GET",
+      "path": "/orders",
+      "params": [],
+      "silentError": { "field": "status", "okValues": ["OK"], "messageField": "message" },
+      "pagination": { "style": "page", "param": "pg", "itemsField": "data", "nextField": "more" },
+      "blockedHours": null,
+      "ruleIds": ["r1", "r2", "r3"],
+      "sampleArgs": "{}"
+    },
+    {
+      "name": "get_order",
+      "description": "Fetch a single order by its numeric id (e.g. \"1001\").",
+      "method": "GET",
+      "path": "/orders/:id",
+      "params": [
+        { "name": "id", "in": "path", "type": "string", "required": true, "description": "Order id, a numeric string like 1001", "normalize": "trim" }
+      ],
+      "silentError": { "field": "status", "okValues": ["OK"], "messageField": "message" },
+      "pagination": null,
+      "blockedHours": null,
+      "ruleIds": ["r1", "r3"],
+      "sampleArgs": "{\"id\":\"1002\"}"
+    },
+    {
+      "name": "create_order",
+      "description": "Create a new order for an existing customer.",
+      "method": "POST",
+      "path": "/orders",
+      "params": [
+        { "name": "customer_id", "in": "body", "type": "string", "required": true, "description": "Customer id like C-100", "normalize": null },
+        { "name": "sku", "in": "body", "type": "string", "required": true, "description": "Product SKU", "normalize": null },
+        { "name": "qty", "in": "body", "type": "number", "required": false, "description": "Quantity, defaults to 1", "normalize": null }
+      ],
+      "silentError": { "field": "status", "okValues": ["OK"], "messageField": "message" },
+      "pagination": null,
+      "blockedHours": null,
+      "ruleIds": ["r1", "r3"],
+      "sampleArgs": "{\"customer_id\":\"C-100\",\"sku\":\"WIDGET-A\",\"qty\":3}"
+    },
+    {
+      "name": "run_sync",
+      "description": "Trigger the ERP-to-warehouse batch reconciliation.",
+      "method": "POST",
+      "path": "/sync",
+      "params": [],
+      "silentError": { "field": "status", "okValues": ["OK"], "messageField": "message" },
+      "pagination": null,
+      "blockedHours": { "startHour": 9, "endHour": 17 },
+      "ruleIds": ["r1", "r3", "r4"],
+      "sampleArgs": "{}"
+    }
+  ]
+}
